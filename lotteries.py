@@ -299,10 +299,11 @@ class algorithm:
     def gradient_decent(data_structure,beta_initial,phi,learning_rate):
         beta = copy.deepcopy(beta_initial)
         for i in range(3000):
-            d_cll = algorithm.d_beta_cll(data_structure,beta,phi)#naive method for reference
+            #d_cll = algorithm.d_beta_cll(data_structure,beta,phi)#naive method for reference
             d_cll1 =[0]*len(beta) 
+            #add d_cll for all the questions together
             for question_number in range(data_structure.get_number_of_questions()):
-                d = algorithm.d_beta_cll1(data_structure,question_number,beta,phi)
+                d = algorithm.d_beta_cll1(data_structure,question_number,beta,phi) 
                 d_cll1 = list(np.array(d)+np.array(d_cll1))
             if random.choice([0,1,2,3,4,5,6,7,8,9,10]) == 0:
                 print("d_cll:",d_cll1) 
@@ -398,7 +399,7 @@ class algorithm:
                         CLL+=counter_matrix[i][j][1]/(counter_matrix[j][i][1]+counter_matrix[i][j][1])*dg.log_p_j1_j2(m,i,j)
             total_cll+=CLL
         #print(beta,phi,CLL)
-        return CLL
+        return total_cll
 
 class plot:
     def plot_beta_3d(data_structure,phi):
