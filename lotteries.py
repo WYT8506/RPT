@@ -134,10 +134,10 @@ class data_generator:
             self.initialize_outcome_utility_vectors(data_structure)
             self.initialize_means_matrix(data_structure)
             #self.distributions = []
-        def get_outcome_utilities(self):
-            return self.outcome_utilities
-        def get_means(self):
-            return self.means
+        def get_outcome_utility_vectors(self):
+            return self.outcome_utility_vectors
+        def get_means_matrix(self):
+            return self.means_matrix
 
         def initialize_outcome_utility_vectors(self,data_structure):
             outcomes = data_structure.get_outcomes()
@@ -299,13 +299,13 @@ class algorithm:
     def gradient_decent(data_structure,beta_initial,phi,learning_rate):
         beta = copy.deepcopy(beta_initial)
         for i in range(3000):
-            #d_cll = algorithm.d_beta_cll(data_structure,beta,phi)
+            d_cll = algorithm.d_beta_cll(data_structure,beta,phi)#naive method for reference
             d_cll1 =[0]*len(beta) 
             for question_number in range(data_structure.get_number_of_questions()):
                 d = algorithm.d_beta_cll1(data_structure,question_number,beta,phi)
                 d_cll1 = list(np.array(d)+np.array(d_cll1))
-                if random.choice([0,1,2,3,4,5,6,7,8,9,10]) == 0:
-                    print("d_cll1:",d_cll1) 
+            if random.choice([0,1,2,3,4,5,6,7,8,9,10]) == 0:
+                print("d_cll:",d_cll1) 
 
             if i == 2999:
                 print("final_d:",d_cll1)
@@ -325,7 +325,7 @@ class algorithm:
             vector.append((algorithm.cll(data_structure,new_beta,phi)-algorithm.cll(data_structure,beta,phi))/h)
         return vector
 
-    def d_beta_cll1(data_structure,index,beta,phi):
+    def d_beta_cll1(data_structure,index,beta,phi):#index means the question number
         vector = []
         dg = data_generator(data_structure,beta,phi)
         counter_matrix = data_structure.get_counter_matrixs()[index]
@@ -377,8 +377,8 @@ class algorithm:
         #print("real means: ",k1*beta_i+c1,k2*beta_i +c2)
         g =exp(k1*beta_i+c1)
         h =exp(k1*beta_i+c1)+exp(k2*beta_i+c2)
-        g_ =exp(k1*beta_i1+c1)
-        h_ =exp(k1*beta_i1+c1)+exp(k2*beta_i1+c2)
+        #g_ =exp(k1*beta_i1+c1)
+        #h_ =exp(k1*beta_i1+c1)+exp(k2*beta_i1+c2)
         #print("suggested likelyhood change is:",((g/h)-(g_/h_))/1e-7)
         d_g = k1*exp(k1*beta_i+c1)
         d_h = k1*exp(k1*beta_i+c1)+k2*exp(k2*beta_i+c2)
@@ -581,6 +581,12 @@ if __name__ == "__main__":
            rankings2.append(dg.sample_a_ranking(1))
 
         ds.build_counter_matrixs([rankings1,rankings2])
+        print(ds.get_outcome_feature_matrixs())
+        print(ds.get_outcome_probabilities_matrixs())
+        print(ds.get_counter_matrixs())
+        print()
+        print(dg.get_means_matrix())
+        print(dg.get_outcome_utility_vectors())
         
 
         #rankings.append([0,1])
