@@ -298,18 +298,18 @@ class algorithm:
 
     def gradient_decent(data_structure,beta_initial,phi,learning_rate):
         beta = copy.deepcopy(beta_initial)
-        for i in range(3000):
+        for i in range(15000):
+            beta_index = i%(len(beta))
             #d_cll = algorithm.d_beta_cll(data_structure,beta,phi)#naive method for reference
             d_cll1 =[0]*len(beta) 
             #add d_cll for all the questions together
             for question_number in range(data_structure.get_number_of_questions()):
-                d = algorithm.d_beta_cll1(data_structure,question_number,beta,phi) 
+                d = algorithm.d_beta_cll1(data_structure,question_number,beta,beta_index,phi) 
                 d_cll1 = list(np.array(d)+np.array(d_cll1))
-            if random.choice([0,1,2,3,4,5,6,7,8,9,10]) == 0:
+            if i%100 == 0:
                 print("d_cll:",d_cll1) 
+                print("cll becomes:",algorithm.cll(data_structure,beta,phi)," bETA is: ",beta)
 
-            if i == 2999:
-                print("final_d:",d_cll1)
             for j in range(len(beta)):
                 beta[j]=beta[j]+d_cll1[j]*learning_rate
         final_cll = algorithm.cll(data_structure,beta,phi)
@@ -326,13 +326,16 @@ class algorithm:
             vector.append((algorithm.cll(data_structure,new_beta,phi)-algorithm.cll(data_structure,beta,phi))/h)
         return vector
 
-    def d_beta_cll1(data_structure,index,beta,phi):#index means the question number
+    def d_beta_cll1(data_structure,index,beta,beta_i,phi):#index means the question number
         vector = []
         dg = data_generator(data_structure,beta,phi)
         counter_matrix = data_structure.get_counter_matrixs()[index]
         num_candidates = len(counter_matrix)
 
         for i in range(len(beta)):
+            if (i!=beta_i):
+                vector.append(0)
+                continue
             beta_i = beta[i]
             d_cll = 0
             for j in range(num_candidates):
@@ -403,19 +406,18 @@ class algorithm:
 
 class plot:
     def plot_beta_3d(data_structure,phi):
-        phi = phi[0]
         X = []
         Y = []
         Z = []
         for i in range(-70,70):
             for j in range(-70,70):
-                X.append(i*0.07)
-                Y.append(j*0.07)
+                X.append(i*0.2)
+                Y.append(j*0.2)
         max_z = -100000
         max_x = -10000
         max_y = -10000
         for i in range(len(X)):
-            CLL = algorithm.cll(data_structure,[X[i],Y[i]],phi)
+            CLL = algorithm.cll(data_structure,[X[i],Y[i],3,4,5],phi)
             Z.append(CLL)
             if CLL> max_z:
                 max_z = CLL
@@ -444,8 +446,8 @@ class plot:
         Z = []
         for i in range(-29,29):
             for j in range(-29,29):
-                X.append(i/60+0.5)
-                Y.append(j/60+0.5)
+                X.append(i/10+0.5)
+                Y.append(j/10+0.5)
 
         for i in range(len(X)):
             Z.append(algorithm.cll(data_structure,beta,[X[i],Y[i]]))
@@ -555,21 +557,25 @@ class plot:
 
 if __name__ == "__main__":
         plot.plot_p_reweighting([0.5,0.5])
-        person0 = person(0,[1,2], 0.90,0.1)
-        person1 = person(1,[3,4], 0.6,0.2)
-        person2 = person(2,[2,1], 0.33,0.24)
+        person0 = person(0,[1,2,4,1], 0.90,0.1)
+        person1 = person(1,[3,4,3,2], 0.6,0.2)
+        person2 = person(2,[2,1,3,3], 0.33,0.24)
 
-        person3 = person(3,[1.5,1.6], 0.96,0.12)
-        person4 = person(4,[3.2,3.4], 0.62,0.24)
-        person5 = person(5,[2.5,1], 0.3,0.21)
+        person3 = person(3,[0,1,2,3], 0.96,0.12)
+        person4 = person(4,[1,2,0,0], 0.62,0.24)
+        person5 = person(5,[3,1,1,2], 0.3,0.21)
+
+        person6 = person(6,[4,5,3,2], 0.8,0.12)
+        person7 = person(7,[3,2,2,3], 0.7,0.24)
+        person8 = person(8,[2,3,6,0], 0.5,0.2)
         #person3 = person(3,[4,5], 0.45,0.36)
-        person_matrix = [[person0,person1,person2],[person3,person4,person5]]
+        person_matrix = [[person0,person1,person2],[person3,person4,person5],[person6,person7,person8]]
         #persons.append(person3)
         #persons.append(person2)
 
         ground_truth1 = ground_truth()
         ground_truth1.set_phi([0.5])
-        ground_truth1.set_beta([1,2])
+        ground_truth1.set_beta([1,4,7,10])
 
         ds = data_structure(person_matrix)
         dg = data_generator(ds,ground_truth1.get_beta(),ground_truth1.get_phi())
@@ -577,11 +583,13 @@ if __name__ == "__main__":
         #rankings = [[0,1],[1,0],[1,0]]
         rankings1 = []
         rankings2 = []
-        for i in range(100):
+        rankings3 = []
+        for i in range(100000):
            rankings1.append(dg.sample_a_ranking(0))
            rankings2.append(dg.sample_a_ranking(1))
+           rankings3.append(dg.sample_a_ranking(2))
 
-        ds.build_counter_matrixs([rankings1,rankings2])
+        ds.build_counter_matrixs([rankings1,rankings2,rankings3])
         print(ds.get_outcome_feature_matrixs())
         print(ds.get_outcome_probabilities_matrixs())
         print(ds.get_counter_matrixs())
@@ -601,8 +609,8 @@ if __name__ == "__main__":
         print(rankings.count([2,0,1]))
         print(rankings.count([2,1,0]))
         """
-
-        beta,phi = algorithm.algorithm1(ds,[0,0],[0.1,0.9],0.1,2)
+        #plot.plot_beta_3d(ds,[0.5])
+        beta,phi = algorithm.algorithm1(ds,[0,0,0,0],[0.5,0.9],0.1,4)
         #print(beta,phi)
         """
         dg = data_generator(ds,beta,phi)
