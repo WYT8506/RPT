@@ -10,6 +10,8 @@ from numpy import linspace, sum
 import math
 from sympy import *
 import copy
+from read_csv import read
+import time
 random.seed(a=None, version=2)
 class ground_truth:
     def __init__(self):
@@ -42,6 +44,8 @@ class person:
     """
     def get_features(self):
         return self.feature_values
+    def print_person(self):
+        print(self.index,self.feature_values,self.p_with,self.p_without)
 class data_structure:
     def __init__(self,person_matrix): #person matrix: number of questions * number of lotteries in each question
             self.person_matrix = person_matrix
@@ -297,8 +301,19 @@ class algorithm:
         return (best_beta,best_phi)
 
     def gradient_decent(data_structure,beta_initial,phi,learning_rate):
+        learning_rate_slow = learning_rate/2
+        learning_rate_mid = learning_rate
+        learning_rate_fast = learning_rate*4
+        learning_rate_very_fast = learning_rate*100
         beta = copy.deepcopy(beta_initial)
-        for i in range(15000):
+        for i in range(30000):
+            start_time = time.time()
+            if i <1000:
+                learning_rate = learning_rate_slow
+            elif i<5000:
+                learning_rate = learning_rate_fast
+            else:
+                learning_rate = learning_rate_very_fast
             beta_index = i%(len(beta))
             #d_cll = algorithm.d_beta_cll(data_structure,beta,phi)#naive method for reference
             d_cll1 =[0]*len(beta) 
@@ -306,12 +321,16 @@ class algorithm:
             for question_number in range(data_structure.get_number_of_questions()):
                 d = algorithm.d_beta_cll1(data_structure,question_number,beta,beta_index,phi) 
                 d_cll1 = list(np.array(d)+np.array(d_cll1))
-            if i%100 == 0:
-                print("d_cll:",d_cll1) 
+            if i%1 == 0:
+                print("time is:",time.time()-start_time)
+                print("iteration:",i, "d_cll:",d_cll1) 
                 print("cll becomes:",algorithm.cll(data_structure,beta,phi)," bETA is: ",beta)
+
+
 
             for j in range(len(beta)):
                 beta[j]=beta[j]+d_cll1[j]*learning_rate
+
         final_cll = algorithm.cll(data_structure,beta,phi)
         return (copy.deepcopy(beta),final_cll)
 
@@ -556,6 +575,25 @@ class plot:
 
 
 if __name__ == "__main__":
+        rawData = read.read_raw_data('dataset.csv')
+        attrList = read.readAttr(rawData)
+        print(len(attrList))
+        chanceList = read.readChance(rawData)
+        #print(chanceList)
+        real_person_matrix = []
+        for i in range(10*3):
+            if i%3 == 0:
+                l = []
+                for j in range(i,i+3):
+                    l.append(person(j,attrList[j],chanceList[j][0],chanceList[j][1]))
+                real_person_matrix.append(l)
+        for e in real_person_matrix:
+            print('---')
+            for i in e:
+                i.print_person()
+        #print(real_person_matrix):
+
+        """
         plot.plot_p_reweighting([0.5,0.5])
         person0 = person(0,[1,2,4,1], 0.90,0.1)
         person1 = person(1,[3,4,3,2], 0.6,0.2)
@@ -572,45 +610,40 @@ if __name__ == "__main__":
         person_matrix = [[person0,person1,person2],[person3,person4,person5],[person6,person7,person8]]
         #persons.append(person3)
         #persons.append(person2)
+        """
 
         ground_truth1 = ground_truth()
         ground_truth1.set_phi([0.5])
-        ground_truth1.set_beta([1,4,7,10])
+        ground_truth1.set_beta([1,4,7,10,8])
 
-        ds = data_structure(person_matrix)
+        ds = data_structure(real_person_matrix)
         dg = data_generator(ds,ground_truth1.get_beta(),ground_truth1.get_phi())
 
         #rankings = [[0,1],[1,0],[1,0]]
-        rankings1 = []
-        rankings2 = []
-        rankings3 = []
-        for i in range(100000):
-           rankings1.append(dg.sample_a_ranking(0))
-           rankings2.append(dg.sample_a_ranking(1))
-           rankings3.append(dg.sample_a_ranking(2))
-
-        ds.build_counter_matrixs([rankings1,rankings2,rankings3])
+        ranking_matrix = []
+        for question_number in range(len(real_person_matrix)):
+            rankings = []
+            for i in range(100000):
+                rankings.append(dg.sample_a_ranking(question_number))
+            ranking_matrix.append(rankings)
+        
+        #print(ranking_matrix)
+        ds.build_counter_matrixs(ranking_matrix)
+        """
         print(ds.get_outcome_feature_matrixs())
         print(ds.get_outcome_probabilities_matrixs())
         print(ds.get_counter_matrixs())
         print()
         print(dg.get_means_matrix())
         print(dg.get_outcome_utility_vectors())
-        
+        """
 
         #rankings.append([0,1])
         #rankings.append([1,0])
         #print(rankings)
-        """
-        print(rankings.count([0,1,2]))
-        print(rankings.count([0,2,1]))
-        print(rankings.count([1,2,0]))
-        print(rankings.count([1,0,2]))
-        print(rankings.count([2,0,1]))
-        print(rankings.count([2,1,0]))
-        """
+
         #plot.plot_beta_3d(ds,[0.5])
-        beta,phi = algorithm.algorithm1(ds,[0,0,0,0],[0.5,0.9],0.1,4)
+        beta,phi = algorithm.algorithm1(ds,[0,0,0,0,0],[0.5,0.9],0.1,2)
         #print(beta,phi)
         """
         dg = data_generator(ds,beta,phi)
